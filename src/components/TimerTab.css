@@ -1,0 +1,38 @@
+.timer-tab-title {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Arial', 'sans-serif';
+}
+
+.timer-tab-time {
+  font-size: 2.5rem;
+  margin: 24px 0;
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Arial', 'sans-serif';
+}
+
+.timer-tab-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.timer-tab-controls button {
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.timer-tab-controls button:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+
+.timer-tab-controls button:not(:disabled):hover {
+  background: #555;
+}
