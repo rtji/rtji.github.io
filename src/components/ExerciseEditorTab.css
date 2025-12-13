@@ -1,87 +1,235 @@
 .exercise-editor-tab {
-  .editor-tab-title {
-    font-size: 2rem;
-    margin-bottom: 24px;
-    font-family: "Inter", "Roboto", "Segoe UI", "Arial", "sans-serif";
+  color: #fff;
+  font-family: "Inter", "Roboto", "Segoe UI", "Arial", "sans-serif";
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editor-tab-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-tab-title {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.editor-tab-subtitle {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.editor-tab-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+}
+
+.editor-tab-form {
+  background: #1c1f29;
+  border: 1px solid #303440;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editor-tab-form-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.editor-tab-form-row.radio-row {
+  gap: 16px;
+}
+
+.editor-tab-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+}
+
+.editor-tab-form input,
+.superset-builder input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: #fff;
+  min-width: 0;
+}
+
+.editor-tab-form input[type="number"],
+.superset-builder input[type="number"] {
+  width: 140px;
+}
+
+.editor-tab-form .full-width {
+  flex: 1;
+}
+
+.superset-builder {
+  background: #0f172a;
+  border: 1px dashed #334155;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.superset-builder h4 {
+  margin: 0;
+}
+
+.superset-builder .superset-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr auto;
+}
+
+.superset-builder .muted,
+.muted {
+  color: #9ca3af;
+}
+
+.superset-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.superset-list li {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-tab-form button {
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.editor-tab-form button:hover {
+  background: #4b5563;
+}
+
+.editor-tab-form button:active {
+  transform: translateY(1px);
+}
+
+.editor-tab-form .ghost {
+  background: transparent;
+  border: 1px solid #444;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-tab-exercises {
+  background: #1c1f29;
+  border: 1px solid #303440;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.exercises-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  background: #374151;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.editor-tab-exercises-list {
+  padding: 0;
+  list-style: none;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editor-tab-exercise-item {
+  border: 2px solid transparent;
+  background: #111827;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+
+.editor-tab-exercise-item .exercise-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-tab-exercise-item .exercise-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  color: #9ca3af;
+}
+
+.editor-tab-exercise-item .close-button {
+  cursor: pointer;
+}
+
+.editor-tab-exercise-item.selected {
+  border-color: #2dd4bf;
+}
+
+.editor-tab-exercise-item:hover {
+  transform: translateY(-1px);
+}
+
+.editor-tab-exercises-empty {
+  color: #aaa;
+}
+
+.active-draft {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #111827;
+  border: 1px dashed #293140;
+  color: #cbd5e1;
+}
+
+@media (max-width: 960px) {
+  .editor-tab-body {
+    grid-template-columns: 1fr;
   }
 
-  .editor-tab-body {
-    display: flex;
-    justify-content: space-around;
-
-    .editor-tab-form {
-      margin-bottom: 24px;
-      text-align: left;
-
-      .editor-tab-form-row {
-        display: flex;
-        gap: 8px;
-
-        & + .editor-tab-form-row {
-          margin-top: 8px;
-        }
-      }
-
-      label {
-        display: block;
-        font-size: 1rem;
-        font-family: "Inter", "Roboto", "Segoe UI", "Arial", "sans-serif";
-      }
-
-      input {
-        padding: 4px 8px;
-        border-radius: 4px;
-        border: 1px solid #444;
-        background: #222;
-        color: #fff;
-      }
-
-      button {
-        margin-top: 12px;
-        background: #333;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        padding: 8px 16px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.2s;
-
-        &:hover {
-          background: #555;
-        }
-      }
-    }
-
-    .editor-tab-exercises {
-      margin-top: 16px;
-      min-width: 360px;
-
-      .editor-tab-exercises-list {
-        padding: 0;
-        list-style: none;
-
-        .editor-tab-exercise-item {
-          border: 2px solid transparent;
-          background: #333;
-          margin-bottom: 8px;
-          padding: 12px;
-          border-radius: 6px;
-          cursor: pointer;
-
-          &.selected {
-            border-color: #fff;
-          }
-
-          .close-button {
-            float: right;
-          }
-        }
-      }
-
-      .editor-tab-exercises-empty {
-        color: #aaa;
-      }
-    }
+  .superset-builder .superset-row {
+    grid-template-columns: 1fr;
   }
 }

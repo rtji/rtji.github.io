@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { type WorkoutItem } from "./ExerciseEditorTab";
 import "./TimerTab.css";
 
 const formatTime = (seconds: number) => {
@@ -9,164 +10,242 @@ const formatTime = (seconds: number) => {
   return `${m}:${s}`;
 };
 
-interface Exercise {
-  name: string;
-  sets: number;
-  reps: number;
-  repDuration: number;
-  restDuration: number;
-}
+type TimerStep = {
+  type: "work" | "rest";
+  label: string;
+  detail: string;
+  duration: number;
+};
 
 interface TimerTabProps {
-  exercises: Exercise[];
+  exercises: WorkoutItem[];
+  onPlanChange: (items: WorkoutItem[]) => void;
 }
 
-const TimerTab: React.FC<TimerTabProps> = ({ exercises }) => {
+const buildSchedule = (items: WorkoutItem[]): TimerStep[] => {
+  const steps: TimerStep[] = [];
+
+  items.forEach((item) => {
+    if (item.type === "exercise") {
+      for (let set = 1; set <= item.sets; set++) {
+        for (let rep = 1; rep <= item.reps; rep++) {
+          steps.push({
+            type: "work",
+            label: item.name,
+            detail: `Set ${set} · Rep ${rep}`,
+            duration: item.repDuration,
+          });
+
+          if (rep < item.reps && item.restBetweenReps > 0) {
+            steps.push({
+              type: "rest",
+              label: "Rest",
+              detail: `${item.name} · between reps`,
+              duration: item.restBetweenReps,
+            });
+          }
+        }
+
+        if (set < item.sets && item.restBetweenSets > 0) {
+          steps.push({
+            type: "rest",
+            label: "Rest",
+            detail: `${item.name} · between sets`,
+            duration: item.restBetweenSets,
+          });
+        }
+      }
+    } else {
+      for (let set = 1; set <= item.sets; set++) {
+        item.exercises.forEach((sub, idx) => {
+          steps.push({
+            type: "work",
+            label: sub.name,
+            detail: `${item.name} · Set ${set}${
+              idx === 0 ? "" : " (continue)"
+            }`,
+            duration: sub.duration,
+          });
+
+          if (sub.restAfter > 0) {
+            steps.push({
+              type: "rest",
+              label: "Rest",
+              detail: `${item.name} · between exercises`,
+              duration: sub.restAfter,
+            });
+          }
+        });
+
+        if (set < item.sets && item.restBetweenSets > 0) {
+          steps.push({
+            type: "rest",
+            label: "Rest",
+            detail: `${item.name} · between sets`,
+            duration: item.restBetweenSets,
+          });
+        }
+      }
+    }
+  });
+
+  return steps;
+};
+
+const TimerTab: React.FC<TimerTabProps> = ({ exercises, onPlanChange }) => {
   const [running, setRunning] = useState(false);
-  const [currentIdx, setCurrentIdx] = useState(0); // exercise index
-  const [currentSet, setCurrentSet] = useState(1);
-  const [currentRep, setCurrentRep] = useState(1);
-  const [phase, setPhase] = useState<"rep" | "rest">("rep");
+  const [schedule, setSchedule] = useState<TimerStep[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Helper to get current exercise
-  const currentExercise = exercises[currentIdx];
+  const currentStep = schedule[currentStepIndex];
 
-  // Start timer sequence
-  const startTimer = () => {
-    if (!running && exercises.length > 0) {
-      setRunning(true);
-      setCurrentIdx(0);
-      setCurrentSet(1);
-      setCurrentRep(1);
-      setPhase("rep");
-      setTimeLeft(exercises[0].repDuration);
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    }
-  };
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running]);
 
-  // Stop timer
-  const stopTimer = () => {
-    setRunning(false);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  // Reset timer
-  const resetTimer = () => {
-    stopTimer();
-    setCurrentIdx(0);
-    setCurrentSet(1);
-    setCurrentRep(1);
-    setPhase("rep");
-    setTimeLeft(0);
-  };
-
-  // Main timer logic
-  React.useEffect(() => {
+  useEffect(() => {
     if (!running) return;
     if (timeLeft > 0) return;
-    if (!currentExercise) {
-      stopTimer();
+
+    if (currentStepIndex >= schedule.length - 1) {
+      setRunning(false);
+      setTimeLeft(0);
       return;
     }
 
-    if (phase === "rep") {
-      // Finished a rep
-      if (currentRep < currentExercise.reps) {
-        setCurrentRep((r) => r + 1);
-        setTimeLeft(currentExercise.repDuration);
-      } else if (currentSet < currentExercise.sets) {
-        setPhase("rest");
-        setTimeLeft(currentExercise.restDuration);
-      } else {
-        // Move to next exercise
-        if (currentIdx < exercises.length - 1) {
-          setCurrentIdx((i) => i + 1);
-          setCurrentSet(1);
-          setCurrentRep(1);
-          setPhase("rep");
-          setTimeLeft(exercises[currentIdx + 1].repDuration);
-        } else {
-          // All done
-          stopTimer();
-        }
-      }
-    } else if (phase === "rest") {
-      // Finished a rest
-      setCurrentSet((s) => s + 1);
-      setCurrentRep(1);
-      setPhase("rep");
-      setTimeLeft(currentExercise.repDuration);
-    }
-    // eslint-disable-next-line
-  }, [timeLeft, running]);
+    setCurrentStepIndex((prev) => prev + 1);
+    setTimeLeft(schedule[currentStepIndex + 1]?.duration ?? 0);
+  }, [timeLeft, running, currentStepIndex, schedule]);
 
-  React.useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
+  const startTimer = () => {
+    const steps = buildSchedule(exercises);
+    if (steps.length === 0) return;
+    setSchedule(steps);
+    setCurrentStepIndex(0);
+    setTimeLeft(steps[0].duration);
+    setRunning(true);
+  };
+
+  const stopTimer = () => {
+    setRunning(false);
+  };
+
+  const resetTimer = () => {
+    setRunning(false);
+    setSchedule([]);
+    setCurrentStepIndex(0);
+    setTimeLeft(0);
+  };
+
+  const upcoming = useMemo(
+    () => schedule.slice(currentStepIndex + 1, currentStepIndex + 5),
+    [schedule, currentStepIndex]
+  );
+
+  const clearPlan = () => {
+    onPlanChange([]);
+    resetTimer();
+  };
 
   return (
-    <>
-      <h2 className="timer-tab-title">Exercise Timer</h2>
-      {running && currentExercise ? (
-        <div style={{ marginBottom: 16, color: "#fff" }}>
-          <div>
-            <strong>Exercise:</strong> {currentExercise.name}
-          </div>
-          <div>
-            <strong>Set:</strong> {currentSet} / {currentExercise.sets}
-          </div>
-          <div>
-            <strong>Rep:</strong>{" "}
-            {phase === "rep"
-              ? `${currentRep} / ${currentExercise.reps}`
-              : "Rest"}
-          </div>
-          <div>
-            <strong>
-              {phase === "rep" ? "Rep Time Left:" : "Rest Time Left:"}
-            </strong>{" "}
-            {formatTime(timeLeft)}
-          </div>
+    <div className="timer-tab">
+      <div className="timer-tab-header">
+        <div>
+          <h2 className="timer-tab-title">Exercise Timer</h2>
+          <p className="muted">
+            Walk through single exercises or supersets with timed holds and
+            rests.
+          </p>
+        </div>
+        <button className="ghost" onClick={clearPlan}>
+          Clear plan
+        </button>
+      </div>
+      {currentStep ? (
+        <div className={`timer-current ${currentStep.type}`}>
+          <div className="timer-label">{currentStep.label}</div>
+          <div className="timer-detail">{currentStep.detail}</div>
+          <div className="timer-clock">{formatTime(timeLeft)}</div>
         </div>
       ) : (
         <div className="timer-tab-time">00:00</div>
       )}
       <div className="timer-tab-controls">
-        <button
-          onClick={startTimer}
-          disabled={running || exercises.length === 0}
-        >
+        <button onClick={startTimer} disabled={running || exercises.length === 0}>
           Start
         </button>
         <button onClick={stopTimer} disabled={!running}>
-          Stop
+          Pause
         </button>
         <button onClick={resetTimer}>Reset</button>
       </div>
-      {/* For debugging, show the exercises list */}
+
+      {running && currentStep && (
+        <div className="timer-queue">
+          <h4>Up next</h4>
+          {upcoming.length === 0 ? (
+            <p className="muted">This is the final step.</p>
+          ) : (
+            <ul>
+              {upcoming.map((step, idx) => (
+                <li key={`${step.label}-${idx}`} className={step.type}>
+                  <div className="step-title">{step.label}</div>
+                  <div className="step-detail">{step.detail}</div>
+                  <span className="badge">{formatTime(step.duration)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {exercises.length > 0 && (
-        <div style={{ marginTop: 24, color: "#fff" }}>
-          <strong>Exercises:</strong>
+        <div className="timer-summary">
+          <h3>Plan overview</h3>
           <ul>
-            {exercises.map((ex, idx) => (
-              <li key={idx}>
-                {ex.name} ({ex.sets} sets x {ex.reps} reps, {ex.repDuration}s,
-                rest {ex.restDuration}s)
+            {exercises.map((ex) => (
+              <li key={ex.id}>
+                <div className="summary-title">
+                  <span className="badge subtle">{ex.type}</span>
+                  <strong>{ex.name}</strong>
+                </div>
+                <div className="summary-meta">
+                  {ex.type === "exercise" ? (
+                    <>
+                      <span>{ex.sets} sets</span>
+                      <span>{ex.reps} reps</span>
+                      <span>{ex.repDuration}s holds</span>
+                      <span>{ex.restBetweenReps}s rest between reps</span>
+                      <span>{ex.restBetweenSets}s rest between sets</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{ex.sets} sets</span>
+                      <span>{ex.restBetweenSets}s rest between sets</span>
+                      <span>
+                        {ex.exercises
+                          .map(
+                            (sub) =>
+                              `${sub.name} · ${sub.duration}s${
+                                sub.restAfter ? ` + ${sub.restAfter}s rest` : ""
+                              }`
+                          )
+                          .join(" › ")}
+                      </span>
+                    </>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

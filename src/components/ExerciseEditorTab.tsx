@@ -1,173 +1,477 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import "./ExerciseEditorTab.css";
 
-export interface Exercise {
+export type WorkoutItem = TimedExercise | Superset;
+
+export interface TimedExercise {
+  id: string;
+  type: "exercise";
   name: string;
   sets: number;
   reps: number;
   repDuration: number;
-  restDuration: number;
+  restBetweenReps: number;
+  restBetweenSets: number;
+}
+
+export interface SupersetExercise {
+  id: string;
+  name: string;
+  duration: number;
+  restAfter: number;
+}
+
+export interface Superset {
+  id: string;
+  type: "superset";
+  name: string;
+  sets: number;
+  restBetweenSets: number;
+  exercises: SupersetExercise[];
 }
 
 interface ExerciseEditorTabProps {
-  exercises: Exercise[];
-  setExercises: (exercises: Exercise[]) => void;
+  exercises: WorkoutItem[];
+  setExercises: (exercises: WorkoutItem[]) => void;
 }
+
+const createId = () =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+const defaultExercise: TimedExercise = {
+  id: "",
+  type: "exercise",
+  name: "",
+  sets: 1,
+  reps: 1,
+  repDuration: 30,
+  restBetweenReps: 10,
+  restBetweenSets: 30,
+};
+
+const defaultSuperset: Superset = {
+  id: "",
+  type: "superset",
+  name: "",
+  sets: 1,
+  restBetweenSets: 60,
+  exercises: [],
+};
 
 const ExerciseEditorTab: React.FC<ExerciseEditorTabProps> = ({
   exercises,
   setExercises,
 }) => {
-  const [form, setForm] = useState<Exercise>({
-    name: "",
-    sets: 1,
-    reps: 1,
-    repDuration: 30,
-    restDuration: 30,
+  const [mode, setMode] = useState<"exercise" | "superset">("exercise");
+  const [form, setForm] = useState<TimedExercise | Superset>({
+    ...defaultExercise,
+    id: createId(),
   });
-  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [supersetExerciseDraft, setSupersetExerciseDraft] = useState<
+    Omit<SupersetExercise, "id">
+  >({
+    name: "",
+    duration: 20,
+    restAfter: 10,
+  });
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const isSuperset = mode === "superset";
+
+  const currentName = useMemo(() => form.name || "Untitled", [form.name]);
+
+  const handleExerciseFieldChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
+    const numericFields = [
+      "sets",
+      "reps",
+      "repDuration",
+      "restBetweenReps",
+      "restBetweenSets",
+    ];
+
+    setForm((prev) => {
+      if (isSuperset) {
+        const supersetPrev = prev as Superset;
+        if (name === "name") return { ...supersetPrev, name: value };
+        if (name === "sets")
+          return { ...supersetPrev, sets: Math.max(1, Number(value)) };
+        if (name === "restBetweenSets")
+          return {
+            ...supersetPrev,
+            restBetweenSets: Math.max(0, Number(value)),
+          };
+        return supersetPrev;
+      }
+
+      const exercisePrev = prev as TimedExercise;
+      return {
+        ...exercisePrev,
+        [name]: numericFields.includes(name)
+          ? Math.max(1, Number(value))
+          : value,
+      };
+    });
+  };
+
+  const handleSupersetExerciseChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setSupersetExerciseDraft((prev) => ({
       ...prev,
-      [name]: name === "name" ? value : Math.max(1, Number(value)),
+      [name]: name === "name" ? value : Math.max(0, Number(value)),
     }));
+  };
+
+  const addSupersetExercise = () => {
+    if (!supersetExerciseDraft.name) return;
+    setForm((prev) => {
+      if (prev.type !== "superset") return prev;
+      return {
+        ...prev,
+        exercises: [
+          ...prev.exercises,
+          { ...supersetExerciseDraft, id: createId() },
+        ],
+      } as Superset;
+    });
+    setSupersetExerciseDraft({ name: "", duration: 20, restAfter: 10 });
+  };
+
+  const removeSupersetExercise = (id: string) => {
+    setForm((prev) => {
+      if (prev.type !== "superset") return prev;
+      return {
+        ...prev,
+        exercises: prev.exercises.filter((ex) => ex.id !== id),
+      } as Superset;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newExercises = [...exercises];
-
-    if (editIdx !== null) {
-      // Update existing exercise
-      setExercises(
-        newExercises.map((ex, idx) => (idx === editIdx ? form : ex))
-      );
-      setEditIdx(null);
-    } else {
-      // Add new exercise
-      setExercises([...newExercises, form]);
+    if (isSuperset && form.type === "superset" && form.exercises.length === 0) {
+      return;
     }
 
-    setForm({ name: "", sets: 1, reps: 1, repDuration: 30, restDuration: 30 });
+    const payload: WorkoutItem = {
+      ...form,
+      id: editId ?? createId(),
+      type: mode,
+    } as WorkoutItem;
+
+    if (editId) {
+      setExercises(exercises.map((ex) => (ex.id === editId ? payload : ex)));
+    } else {
+      setExercises([...exercises, payload]);
+    }
+
+    resetForm();
   };
 
-  const handleEditExercise = (idx: number) => {
-    setForm(exercises[idx]);
-    setEditIdx(idx);
+  const resetForm = () => {
+    setEditId(null);
+    setSupersetExerciseDraft({ name: "", duration: 20, restAfter: 10 });
+    setForm(
+      mode === "superset"
+        ? { ...defaultSuperset, id: createId() }
+        : { ...defaultExercise, id: createId() }
+    );
+  };
+
+  const handleEditExercise = (item: WorkoutItem) => {
+    setMode(item.type);
+    setForm(item);
+    setEditId(item.id);
   };
 
   const handleRemoveExercise = (
     e: React.MouseEvent<SVGSVGElement>,
-    idx: number
+    id: string
   ) => {
     e.stopPropagation();
-    const newExercises = [...exercises];
-    newExercises.splice(idx, 1);
-    setExercises(newExercises);
+    setExercises(exercises.filter((ex) => ex.id !== id));
+    if (editId === id) resetForm();
   };
 
   return (
     <div className="exercise-editor-tab">
+      <div className="editor-tab-header">
+        <h2 className="editor-tab-title">Workout Builder</h2>
+        <p className="editor-tab-subtitle">
+          Define duration-based exercises and flexible supersets to drive the
+          timer.
+        </p>
+      </div>
       <div className="editor-tab-body">
         <form onSubmit={handleSubmit} className="editor-tab-form">
-          <div className="editor-tab-form-row">
-            <label>Exercise Name</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleFormChange}
-              required
-            />
-          </div>
-          <div className="editor-tab-form-row">
+          <div className="editor-tab-form-row radio-row">
             <label>
-              Sets
-              <br />
               <input
-                type="number"
-                name="sets"
-                value={form.sets}
-                min={1}
-                onChange={handleFormChange}
-                required
+                type="radio"
+                name="mode"
+                checked={mode === "exercise"}
+                onChange={() => {
+                  setMode("exercise");
+                  setForm({ ...defaultExercise, id: createId() });
+                  setEditId(null);
+                }}
               />
+              Single exercise
             </label>
             <label>
-              Reps
-              <br />
               <input
-                type="number"
-                name="reps"
-                value={form.reps}
-                min={1}
-                onChange={handleFormChange}
-                required
+                type="radio"
+                name="mode"
+                checked={mode === "superset"}
+                onChange={() => {
+                  setMode("superset");
+                  setForm({ ...defaultSuperset, id: createId() });
+                  setEditId(null);
+                }}
               />
+              Superset
             </label>
           </div>
+
           <div className="editor-tab-form-row">
-            <label>
-              Rep duration (sec)
-              <br />
+            <label className="full-width">
+              Name
               <input
-                type="number"
-                name="repDuration"
-                value={form.repDuration}
-                min={1}
-                onChange={handleFormChange}
-                required
-              />
-            </label>
-            <label>
-              Rest between sets (sec)
-              <br />
-              <input
-                type="number"
-                name="restDuration"
-                value={form.restDuration}
-                min={1}
-                onChange={handleFormChange}
+                name="name"
+                value={form.name}
+                onChange={handleExerciseFieldChange}
                 required
               />
             </label>
           </div>
-          <button type="submit">
-            {editIdx !== null ? "Update exercise" : "Add exercise"}
-          </button>
+
+          {!isSuperset && form.type === "exercise" && (
+            <>
+              <div className="editor-tab-form-row">
+                <label>
+                  Sets
+                  <input
+                    type="number"
+                    name="sets"
+                    value={form.sets}
+                    min={1}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Reps per set
+                  <input
+                    type="number"
+                    name="reps"
+                    value={form.reps}
+                    min={1}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+              </div>
+              <div className="editor-tab-form-row">
+                <label>
+                  Hold duration (sec)
+                  <input
+                    type="number"
+                    name="repDuration"
+                    value={form.repDuration}
+                    min={1}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Rest between reps (sec)
+                  <input
+                    type="number"
+                    name="restBetweenReps"
+                    value={form.restBetweenReps}
+                    min={0}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+              </div>
+              <div className="editor-tab-form-row">
+                <label className="full-width">
+                  Rest between sets (sec)
+                  <input
+                    type="number"
+                    name="restBetweenSets"
+                    value={form.restBetweenSets}
+                    min={0}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+              </div>
+            </>
+          )}
+
+          {isSuperset && form.type === "superset" && (
+            <>
+              <div className="editor-tab-form-row">
+                <label>
+                  Sets
+                  <input
+                    type="number"
+                    name="sets"
+                    value={form.sets}
+                    min={1}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Rest between sets (sec)
+                  <input
+                    type="number"
+                    name="restBetweenSets"
+                    value={form.restBetweenSets}
+                    min={0}
+                    onChange={handleExerciseFieldChange}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="superset-builder">
+                <h4>Superset sequence</h4>
+                <div className="superset-row">
+                  <input
+                    name="name"
+                    placeholder="Exercise name"
+                    value={supersetExerciseDraft.name}
+                    onChange={handleSupersetExerciseChange}
+                  />
+                  <input
+                    type="number"
+                    name="duration"
+                    min={1}
+                    placeholder="Duration (sec)"
+                    value={supersetExerciseDraft.duration}
+                    onChange={handleSupersetExerciseChange}
+                  />
+                  <input
+                    type="number"
+                    name="restAfter"
+                    min={0}
+                    placeholder="Rest after (sec)"
+                    value={supersetExerciseDraft.restAfter}
+                    onChange={handleSupersetExerciseChange}
+                  />
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={addSupersetExercise}
+                  >
+                    Add to superset
+                  </button>
+                </div>
+                {form.exercises.length === 0 ? (
+                  <p className="muted">No superset items yet.</p>
+                ) : (
+                  <ul className="superset-list">
+                    {form.exercises.map((sub) => (
+                      <li key={sub.id}>
+                        <div>
+                          <strong>{sub.name}</strong> · {sub.duration}s
+                          {sub.restAfter > 0 ? ` · Rest ${sub.restAfter}s` : ""}
+                        </div>
+                        <button
+                          type="button"
+                          className="ghost"
+                          onClick={() => removeSupersetExercise(sub.id)}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
+
+          <div className="form-actions">
+            <button type="submit" disabled={isSuperset && form.exercises.length === 0}>
+              {editId ? "Update entry" : "Add to plan"}
+            </button>
+            <button type="button" className="ghost" onClick={resetForm}>
+              Clear form
+            </button>
+          </div>
         </form>
         <div className="editor-tab-exercises">
-          <h3>Exercises</h3>
+          <div className="exercises-header">
+            <div>
+              <h3>Workout plan</h3>
+              <p className="muted">Tap an item to edit or remove it.</p>
+            </div>
+            <span className="badge">{exercises.length} items</span>
+          </div>
           {exercises.length === 0 ? (
             <div className="editor-tab-exercises-empty">
               No exercises added yet.
             </div>
           ) : (
             <ul className="editor-tab-exercises-list">
-              {exercises.map((ex, idx) => (
+              {exercises.map((ex) => (
                 <li
-                  key={idx}
+                  key={ex.id}
                   className={`editor-tab-exercise-item ${
-                    editIdx === idx ? "selected" : ""
+                    editId === ex.id ? "selected" : ""
                   }`}
-                  onClick={() => handleEditExercise(idx)}
+                  onClick={() => handleEditExercise(ex)}
                   title="Click to edit"
                 >
-                  <strong>{ex.name}</strong>
-                  <CloseIcon
-                    className="close-button"
-                    onClick={(e) => handleRemoveExercise(e, idx)}
-                  />
-                  <br />
-                  Sets: {ex.sets}, Reps: {ex.reps}, Rep Duration:{" "}
-                  {ex.repDuration}s, Rest: {ex.restDuration}s
+                  <div className="exercise-title">
+                    <strong>{ex.name}</strong>
+                    <CloseIcon
+                      className="close-button"
+                      onClick={(e) => handleRemoveExercise(e, ex.id)}
+                    />
+                  </div>
+                  <div className="exercise-meta">
+                    {ex.type === "exercise" ? (
+                      <>
+                        <span>{ex.sets} sets</span>
+                        <span>{ex.reps} reps</span>
+                        <span>{ex.repDuration}s holds</span>
+                        <span>{ex.restBetweenReps}s rest between reps</span>
+                        <span>{ex.restBetweenSets}s rest between sets</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Superset · {ex.sets} sets</span>
+                        <span>{ex.restBetweenSets}s rest between sets</span>
+                        <span>
+                          {ex.exercises.length} exercise
+                          {ex.exercises.length === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
+          <div className="active-draft">
+            Editing: <strong>{editId ? "Existing entry" : "New entry"}</strong>
+            <br />
+            Label: <strong>{currentName}</strong>
+          </div>
         </div>
       </div>
     </div>
