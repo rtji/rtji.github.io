@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { type WorkoutItem } from "./ExerciseEditorTab";
 import "./TimerTab.css";
+import type { WorkoutItem } from "./types";
 
 const formatTime = (seconds: number) => {
   const m = Math.floor(seconds / 60)
@@ -176,7 +176,10 @@ const TimerTab: React.FC<TimerTabProps> = ({ exercises, onPlanChange }) => {
         <div className="timer-tab-time">00:00</div>
       )}
       <div className="timer-tab-controls">
-        <button onClick={startTimer} disabled={running || exercises.length === 0}>
+        <button
+          onClick={startTimer}
+          disabled={running || exercises.length === 0}
+        >
           Start
         </button>
         <button onClick={stopTimer} disabled={!running}>

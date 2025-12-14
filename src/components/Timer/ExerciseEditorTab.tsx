@@ -1,45 +1,18 @@
 import React, { useMemo, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import "./ExerciseEditorTab.css";
-
-export type WorkoutItem = TimedExercise | Superset;
-
-export interface TimedExercise {
-  id: string;
-  type: "exercise";
-  name: string;
-  sets: number;
-  reps: number;
-  repDuration: number;
-  restBetweenReps: number;
-  restBetweenSets: number;
-}
-
-export interface SupersetExercise {
-  id: string;
-  name: string;
-  duration: number;
-  restAfter: number;
-}
-
-export interface Superset {
-  id: string;
-  type: "superset";
-  name: string;
-  sets: number;
-  restBetweenSets: number;
-  exercises: SupersetExercise[];
-}
+import type {
+  WorkoutItem,
+  TimedExercise,
+  Superset,
+  SupersetExercise,
+} from "./types";
+import { createId } from "../../helpers/helpers";
 
 interface ExerciseEditorTabProps {
   exercises: WorkoutItem[];
   setExercises: (exercises: WorkoutItem[]) => void;
 }
-
-const createId = () =>
-  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const defaultExercise: TimedExercise = {
   id: "",
@@ -349,28 +322,37 @@ const ExerciseEditorTab: React.FC<ExerciseEditorTabProps> = ({
               <div className="superset-builder">
                 <h4>Superset sequence</h4>
                 <div className="superset-row">
-                  <input
-                    name="name"
-                    placeholder="Exercise name"
-                    value={supersetExerciseDraft.name}
-                    onChange={handleSupersetExerciseChange}
-                  />
-                  <input
-                    type="number"
-                    name="duration"
-                    min={1}
-                    placeholder="Duration (sec)"
-                    value={supersetExerciseDraft.duration}
-                    onChange={handleSupersetExerciseChange}
-                  />
-                  <input
-                    type="number"
-                    name="restAfter"
-                    min={0}
-                    placeholder="Rest after (sec)"
-                    value={supersetExerciseDraft.restAfter}
-                    onChange={handleSupersetExerciseChange}
-                  />
+                  <label>
+                    Exercise name
+                    <input
+                      name="name"
+                      placeholder="Exercise name"
+                      value={supersetExerciseDraft.name}
+                      onChange={handleSupersetExerciseChange}
+                    />
+                  </label>
+                  <label>
+                    Duration (sec)
+                    <input
+                      type="number"
+                      name="duration"
+                      min={1}
+                      placeholder="Duration (sec)"
+                      value={supersetExerciseDraft.duration}
+                      onChange={handleSupersetExerciseChange}
+                    />
+                  </label>
+                  <label>
+                    Rest after (sec)
+                    <input
+                      type="number"
+                      name="restAfter"
+                      min={0}
+                      placeholder="Rest after (sec)"
+                      value={supersetExerciseDraft.restAfter}
+                      onChange={handleSupersetExerciseChange}
+                    />
+                  </label>
                   <button
                     type="button"
                     className="ghost"
@@ -405,7 +387,10 @@ const ExerciseEditorTab: React.FC<ExerciseEditorTabProps> = ({
           )}
 
           <div className="form-actions">
-            <button type="submit" disabled={isSuperset && form.exercises.length === 0}>
+            <button
+              type="submit"
+              disabled={isSuperset && (form as Superset).exercises.length === 0}
+            >
               {editId ? "Update entry" : "Add to plan"}
             </button>
             <button type="button" className="ghost" onClick={resetForm}>
