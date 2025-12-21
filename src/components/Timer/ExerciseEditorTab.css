@@ -36,43 +36,65 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.95rem;
+    color: #e5e7eb;
+  }
+
+  input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #374151;
+    background: #111827;
+    color: #fff;
+    min-width: 0;
+
+    &[type="number"] {
+      width: 140px;
+    }
+  }
+
+  .full-width {
+    flex: 1;
+  }
+
+  button {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+
+    &:hover {
+      background: #4b5563;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .ghost {
+    background: transparent;
+    border: 1px solid #444;
+  }
 }
 
 .editor-tab-form-row {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
 
-.editor-tab-form-row.radio-row {
-  gap: 16px;
-}
-
-.editor-tab-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.95rem;
-  color: #e5e7eb;
-}
-
-.editor-tab-form input,
-.superset-builder input {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #374151;
-  background: #111827;
-  color: #fff;
-  min-width: 0;
-}
-
-.editor-tab-form input[type="number"],
-.superset-builder input[type="number"] {
-  width: 140px;
-}
-
-.editor-tab-form .full-width {
-  flex: 1;
+  &.radio-row {
+    gap: 16px;
+  }
 }
 
 .superset-builder {
@@ -83,19 +105,35 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  h4 {
+    margin: 0;
+  }
+
+  .superset-row {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1.2fr 0.7fr 0.7fr auto;
+  }
+
+  .muted {
+    color: #9ca3af;
+  }
+
+  input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #374151;
+    background: #111827;
+    color: #fff;
+    min-width: 0;
+
+    &[type="number"] {
+      width: 140px;
+    }
+  }
 }
 
-.superset-builder h4 {
-  margin: 0;
-}
-
-.superset-builder .superset-row {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: 1.2fr 0.7fr 0.7fr auto;
-}
-
-.superset-builder .muted,
 .muted {
   color: #9ca3af;
 }
@@ -107,40 +145,16 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
 
-.superset-list li {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 8px;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.editor-tab-form button {
-  background: #333;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-
-.editor-tab-form button:hover {
-  background: #4b5563;
-}
-
-.editor-tab-form button:active {
-  transform: translateY(1px);
-}
-
-.editor-tab-form .ghost {
-  background: transparent;
-  border: 1px solid #444;
+  li {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
 .form-actions {
@@ -184,32 +198,32 @@
   border-radius: 10px;
   cursor: pointer;
   transition: border-color 0.2s, transform 0.1s;
-}
 
-.editor-tab-exercise-item .exercise-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+  .exercise-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-.editor-tab-exercise-item .exercise-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 6px;
-  color: #9ca3af;
-}
+  .exercise-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+    color: #9ca3af;
+  }
 
-.editor-tab-exercise-item .close-button {
-  cursor: pointer;
-}
+  .close-button {
+    cursor: pointer;
+  }
 
-.editor-tab-exercise-item.selected {
-  border-color: #2dd4bf;
-}
+  &.selected {
+    border-color: #2dd4bf;
+  }
 
-.editor-tab-exercise-item:hover {
-  transform: translateY(-1px);
+  &:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .editor-tab-exercises-empty {
@@ -222,6 +236,16 @@
   background: #111827;
   border: 1px dashed #293140;
   color: #cbd5e1;
+}
+
+@media (max-width: 960px) {
+  .editor-tab-body {
+    grid-template-columns: 1fr;
+  }
+
+  .superset-builder .superset-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 960px) {
