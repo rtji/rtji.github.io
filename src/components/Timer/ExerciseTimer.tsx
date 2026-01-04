@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import TimerTab from "./Timer/TimerTab";
-import ExerciseEditorTab, { type WorkoutItem } from "./Timer/ExerciseEditorTab";
+import TimerTab from "./TimerTab";
+import ExerciseEditorTab from "./ExerciseEditorTab";
 import "./ExerciseTimer.css";
+import type { WorkoutItem } from "./types";
 
 const samplePlan: WorkoutItem[] = [
   {

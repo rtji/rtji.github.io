@@ -1,0 +1,250 @@
+.timer-tab {
+  color: #fff;
+  font-family: "Inter", "Roboto", "Segoe UI", "Arial", "sans-serif";
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+.timer-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  .ghost {
+    background: transparent;
+    border: 1px solid #444;
+
+    &:hover {
+      background: #555;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+}
+
+.timer-tab-title {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.timer-tab-time {
+  font-size: 2.5rem;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.timer-tab-controls {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  button {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+
+    &:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+
+    &:not(:disabled):hover {
+      background: #555;
+    }
+
+    &:not(:disabled):active {
+      transform: translateY(1px);
+    }
+  }
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid #444;
+}
+
+.superset-builder button {
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+
+  &:hover {
+    background: #555;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.timer-current {
+  background: linear-gradient(135deg, #2c2f3a, #1f2230);
+  border: 1px solid #393d4b;
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr;
+  align-items: center;
+  gap: 8px;
+
+  &.work {
+    border-color: #2dd4bf;
+    box-shadow: 0 8px 24px rgba(45, 212, 191, 0.15);
+  }
+
+  &.rest {
+    border-color: #93c5fd;
+    box-shadow: 0 8px 24px rgba(147, 197, 253, 0.12);
+  }
+}
+
+.timer-label {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.timer-detail {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.timer-clock {
+  font-size: 2.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-queue,
+.timer-summary {
+  background: #1c1f29;
+  border: 1px solid #303440;
+  border-radius: 12px;
+  padding: 16px;
+
+  h4,
+  h3 {
+    margin: 0 0 12px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  li {
+    background: #252836;
+    border: 1px solid #323647;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .badge {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+}
+
+.timer-queue {
+  li.rest {
+    border-color: #4b5563;
+  }
+
+  .step-title {
+    font-weight: 700;
+  }
+
+  .step-detail {
+    color: #9ca3af;
+    font-size: 0.95rem;
+  }
+}
+
+.timer-summary {
+  .summary-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .summary-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    span {
+      color: #9ca3af;
+      font-size: 0.95rem;
+    }
+  }
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+.badge {
+  background: #374151;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+
+  &.subtle {
+    background: #111827;
+    border: 1px solid #1f2937;
+  }
+}
+
+@media (max-width: 768px) {
+  .timer-current {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .timer-clock {
+    text-align: left;
+  }
+}
+
+@media (max-width: 768px) {
+  .timer-current {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .timer-clock {
+    text-align: left;
+  }
+}
